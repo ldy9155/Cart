@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sist.bean.AdminMemberBean">
+
+	<select id="idCheck" parameterType="java.util.HashMap" resultType="java.lang.String">
+		<if test="flag=='company'">
+			SELECT CID FROM CARTCOMPANY WHERE CID=#{id}
+		</if>
+		<if test="flag=='member'">
+			SELECT MID FROM CARTMEMBER WHERE MID=#{id}
+		</if> 
+	</select>
+	
+	<select id="adminSeq" resultType="java.lang.Integer">
+		SELECT ADMIN_SEQ.NEXTVAL FROM DUAL
+	</select>
+	
+	<select id="productSeq" resultType="java.lang.Integer">
+		SELECT PRODUCT_SEQ.NEXTVAL FROM DUAL
+	</select>
+	
+	<insert id="adminInsert" parameterType="java.util.HashMap">
+		INSERT INTO CARTCOMPANY VALUES(#{cnum},#{cid},#{cpw},#{cname},#{ceoname},#{compost},#{comaddress},#{comkind},#{ccall},#{chargeman},#{cmphone})
+	</insert>
+	
+	<select id="selectAdminMember" resultType="Amember">
+		SELECT * FROM CARTCOMPANY
+	</select>
+	
+	<select id="adminLogin" parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT CPW FROM CARTCOMPANY WHERE CID=#{ID} 
+	</select>
+
+	<select id="adminInfo" parameterType="java.lang.String" resultType="Amember">
+		SELECT * FROM CARTCOMPANY WHERE CID=#{ID}
+	</select>
+
+	<insert id="productInsert" parameterType="Product">
+		INSERT INTO CARTPRODUCT	VALUES(#{pnum},#{cgory},#{pamount},#{pname},#{pprice},#{pinfo},#{pimage},#{cnum},#{savemoney},#{pmprice},SYSDATE)	
+	</insert>
+
+	<select id="selectProduct" resultType="Product" parameterType="java.util.HashMap">
+		SELECT RM, PNUM, CGORY, PAMOUNT, PNAME, PPRICE, PINFO, PIMAGE, CNUM, SAVEMONEY, PMPRICE, REGDATE
+		FROM(
+		SELECT ROW_NUMBER() OVER(ORDER BY PNAME ASC)RM, PNUM, CGORY, PAMOUNT, PNAME, PPRICE, PINFO, PIMAGE, CNUM, SAVEMONEY, PMPRICE, TO_CHAR(REGDATE,'YYYY-MM-DD')REGDATE FROM CARTPRODUCT
+		<if test="query!=null">
+			WHERE ${query} LIKE '%'||#{data}||'%'
+		</if>
+		)
+		WHERE RM BETWEEN #{start} and #{end}
+	</select>
+
+	<select id="getTotalRow" resultType="java.lang.Integer" parameterType="java.util.HashMap">
+		SELECT COUNT(*) FROM CARTPRODUCT
+		<if test="query!=null">
+			WHERE ${query} LIKE '%'||#{data}||'%'
+		</if>
+	</select>
+	
+	<delete id="productDelete" parameterType="java.lang.Integer">
+		DELETE FROM CARTPRODUCT WHERE PNUM=#{pnum}
+	</delete>
+	
+	<select id="productInfo" resultType="Product" parameterType="java.lang.Integer">
+		SELECT * FROM CARTPRODUCT WHERE PNUM=#{pnum}
+	</select>
+	
+	<update id="productUpdate" parameterType="Product">
+		UPDATE CARTPRODUCT SET CGORY=#{cgory}, PAMOUNT=#{pamount}, PNAME=#{pname}, PPRICE=#{pprice}, PINFO=#{pinfo}, PIMAGE=#{pimage}, CNUM=#{cnum}, SAVEMONEY=#{savemoney}, PMPRICE=#{pmprice}, REGDATE=SYSDATE 
+		WHERE PNUM=#{pnum}
+	</update>
+	
+	<select id="selectNew" resultType="Product" parameterType="java.util.HashMap">
+		SELECT RM, PNUM, CGORY, PAMOUNT, PNAME, PPRICE, PINFO, PIMAGE, CNUM, SAVEMONEY, PMPRICE, REGDATE
+		FROM(
+		SELECT ROW_NUMBER() OVER(ORDER BY REGDATE DESC)RM, PNUM, CGORY, PAMOUNT, PNAME, PPRICE, PINFO, PIMAGE, CNUM, SAVEMONEY, PMPRICE, TO_CHAR(REGDATE,'YYYY-MM-DD')REGDATE FROM CARTPRODUCT
+		<if test="query!=null">
+			WHERE ${query} LIKE '%'||#{data}||'%'
+		</if>
+		)
+		WHERE RM BETWEEN 1 and 4
+	</select>
+	
+	<insert id="memberAdd" parameterType="Cmember">
+		INSERT INTO CARTMEMBER VALUES(#{mid},#{mpw},#{mname},#{mphone},#{mbirth},#{memail},#{mpoint},#{mgrade})	
+	</insert>
+	
+	<select id="memberInfo" parameterType="java.lang.String" resultType="Cmember">
+		SELECT * FROM CARTMEMBER WHERE MID=#{ID}
+	</select>
+		
+	<select id="memberLogin" parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT MPW FROM CARTMEMBER WHERE MID=#{ID} 
+	</select>
+	
+	<insert id="cartInsert" parameterType="cart">
+		INSERT INTO BASKET VALUES(#{basketno},#{pcount},#{callprice},#{dcharge},#{pnum},#{mid})
+	</insert>
+	
+	<select id="cartListSelect" parameterType="java.lang.String" resultType="cartList">
+		SELECT B.BASKETNO,B.CALLPRICE,B.PNUM,B.PCOUNT,B.MID,B.DCHARGE,B.CALLPRICE,C.PNAME,C.PPRICE,C.PIMAGE,C.SAVEMONEY FROM BASKET B,CARTPRODUCT C WHERE MID=#{id}     AND B.PNUM=C.PNUM
+	</select>
+	
+	<select id="cartSeq" resultType="java.lang.Integer">
+		SELECT BASKET_SEQ.NEXTVAL FROM DUAL
+	</select>
+	
+	<delete id="cartDeleteOne" parameterType="java.lang.Integer">
+		DELETE FROM BASKET WHERE BASKETNO=#{basketno}	
+	</delete>
+	
+	<delete id="cartDeleteAll" parameterType="java.lang.String">
+		DELETE FROM BASKET WHERE MID=#{mid}	
+	</delete>
+	
+	<delete id="cartDeletes" parameterType="java.util.HashMap">
+	DELETE FROM BASKET WHERE
+	<if test="no!=null">
+		BASKETNO IN
+		<foreach collection="no" index="index" item="nos" open="("
+			close=")" separator=",">
+			#{nos}
+		</foreach>
+	</if>
+	</delete>
+	
+	<update id="cartUpdate" parameterType="java.util.HashMap">
+		UPDATE BASKET SET PCOUNT=#{pcount},CALLPRICE=#{price} WHERE BASKETNO=#{basketno}
+	</update>
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
